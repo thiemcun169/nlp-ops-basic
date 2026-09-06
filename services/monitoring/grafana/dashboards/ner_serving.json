@@ -1,0 +1,568 @@
+{
+  "title": "NER Serving: giám sát vận hành",
+  "uid": "nlp-ner-serving",
+  "tags": [
+    "nlp-ops",
+    "triton",
+    "ner"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Throughput và latency (phần người làm sản phẩm quan tâm)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Throughput (request/giây)",
+      "description": "Số suy luận thành công mỗi giây. Khi hệ thống bão hoà, con số này ĐỨNG YÊN dù thêm người dùng, trong khi latency vẫn tăng. Đó là dấu hiệu rõ nhất của điểm bão hoà.",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nv_inference_request_success[1m]))",
+          "legendFormat": "req/s",
+          "refId": "A"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Latency trung bình (ms)",
+      "description": "TRUNG BÌNH cộng, không phải phân vị. Triton chỉ xuất bộ đếm cộng dồn nên không dựng được p50/p95/p99 từ đây. Trung bình che mất phần đuôi: một số ít request rất chậm gần như không làm dịch chuyển con số này. Muốn phân vị thì đọc kết quả load_test/ (Locust đo phía client và có đủ p50, p90, p99).",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 300
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nv_inference_request_duration_us[1m])) / clamp_min(sum(rate(nv_inference_request_success[1m])), 0.001) / 1000",
+          "legendFormat": "trung bình",
+          "refId": "A"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Request đang xếp hàng",
+      "description": "Số request đang chờ trong hàng đợi của Triton TẠI THỜI ĐIỂM ĐO. Khác với biểu đồ bóc tách latency: ở đó 5 ms chờ gom batch là bình thường, còn ở đây con số lớn hơn 0 KÉO DÀI mới là dấu hiệu không xử lý kịp. Đây là chỉ số cảnh báo sớm: nó dựng lên trước khi latency kịp tăng.",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(nv_inference_pending_request_count)",
+          "legendFormat": "đang chờ",
+          "refId": "A"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Request lỗi (cộng dồn)",
+      "description": "Bất kỳ giá trị nào lớn hơn 0 cũng đáng điều tra ngay, kể cả khi tỷ lệ nhỏ. Lỗi chỉ xuất hiện khi tải cao gần như luôn là vấn đề đồng thời, không phải ngẫu nhiên.",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(nv_inference_request_failure) or vector(0)",
+          "legendFormat": "lỗi",
+          "refId": "A"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "timeseries",
+      "title": "Bóc tách latency: chờ gom batch, chờ nghẽn, và tính toán",
+      "description": "ĐỌC KỸ TRƯỚC KHI KẾT LUẬN. Đường 'chờ hàng đợi' KHÔNG phải lúc nào cũng là dấu hiệu quá tải. Với dynamic batching, mỗi request chờ tối đa max_queue_delay (đường ngang 5 ms) để Triton gom thêm request khác vào cùng một batch. Khi tải THẤP, không có ai để gom nên request chờ đủ 5 ms rồi mới chạy: queue bám sát đường ngang và thường CAO HƠN thời gian tính toán. Đó là bình thường, do cấu hình, không phải sự cố. Đo được: gửi request lẻ -> queue 5106 us; gửi 16 luồng đồng thời -> queue 1482 us (GIẢM, vì batch đầy sớm). Chỉ khi queue vượt HẲN đường 5 ms mới là nghẽn thật.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ngưỡng chờ gom batch đã cấu hình (max_queue_delay)"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    6
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nv_inference_queue_duration_us[1m])) / clamp_min(sum(rate(nv_inference_request_success[1m])), 0.001) / 1000",
+          "legendFormat": "Chờ hàng đợi",
+          "refId": "A"
+        },
+        {
+          "expr": "(sum(rate(nv_inference_compute_input_duration_us[1m])) + sum(rate(nv_inference_compute_infer_duration_us[1m])) + sum(rate(nv_inference_compute_output_duration_us[1m]))) / clamp_min(sum(rate(nv_inference_request_success[1m])), 0.001) / 1000",
+          "legendFormat": "Tính toán (vào + chạy model + ra)",
+          "refId": "B"
+        },
+        {
+          "expr": "vector(5)",
+          "legendFormat": "Ngưỡng chờ gom batch đã cấu hình (max_queue_delay)",
+          "refId": "C"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "timeseries",
+      "title": "So sánh GPU và CPU trên cùng một model",
+      "description": "Cùng file trọng số, cùng runtime, khác đúng phần cứng. Chạy load_test/run_stress_test.sh rồi nhìn khoảng cách giữa hai đường: đó chính là giá trị thật của GPU trong bài toán này, đo trên hệ thống của mình chứ không lấy từ quảng cáo.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(nv_inference_compute_infer_duration_us{model=\"ner_onnx\"}[1m]) / clamp_min(rate(nv_inference_request_success{model=\"ner_onnx\"}[1m]), 0.001) / 1000",
+          "legendFormat": "GPU (ner_onnx)",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nv_inference_compute_infer_duration_us{model=\"ner_onnx_cpu\"}[1m]) / clamp_min(rate(nv_inference_request_success{model=\"ner_onnx_cpu\"}[1m]), 0.001) / 1000",
+          "legendFormat": "CPU (ner_onnx_cpu)",
+          "refId": "B"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "Throughput theo thời gian, tách theo model",
+      "description": "Chạy đo tải rồi xem đường này chạm trần ở đâu. Điểm nó ngừng đi lên trong khi độ trễ vẫn tăng chính là điểm bão hoà của hệ thống.",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 18
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (rate(nv_inference_request_success[1m]))",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Kích thước batch trung bình Triton gộp được",
+      "description": "Trung bình mỗi lần chạy model phục vụ được bao nhiêu request. Bằng 1 nghĩa là gộp batch động không phát huy tác dụng: request đến quá thưa nên không có gì để gộp. Lớn hơn 1 là chỗ thông lượng tăng lên mà không cần thêm phần cứng. Trần là max_batch_size trong config.pbtxt, hiện đặt bằng 8.",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "min": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "max": 9,
+          "unit": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (rate(nv_inference_request_success[1m])) / clamp_min(sum by (model) (rate(nv_inference_exec_count[1m])), 0.001)",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ],
+      "id": 9
+    },
+    {
+      "type": "row",
+      "title": "Lớp ứng dụng (FastAPI) — tách bạch với số đo Triton",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency end-to-end theo PHÂN VỊ (đo tại FastAPI)",
+      "description": "Phân vị THẬT, dựng từ histogram của lớp ứng dụng. Đây là thứ dashboard Triton không cho được: Triton chỉ xuất bộ đếm cộng dồn nên chỉ ra trung bình, mà trung bình che mất phần đuôi. p99 mới là thứ người dùng chậm nhất cảm nhận. Con số ở đây tính từ lúc vào handler FastAPI, đã gồm cả tokenize và gom span, nên LUÔN lớn hơn con số Triton báo. Truy vấn có `> 0` ở cuối để loại các chuỗi NaN: histogram_quantile trả NaN cho model không có request nào trong cửa sổ, và một chuỗi toàn NaN làm panel timeseries của Grafana báo 'An unexpected error happened'.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, model) (rate(nlpops_e2e_latency_seconds_bucket[5m]))) > 0",
+          "legendFormat": "p50 {{model}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum by (le, model) (rate(nlpops_e2e_latency_seconds_bucket[5m]))) > 0",
+          "legendFormat": "p90 {{model}}",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, model) (rate(nlpops_e2e_latency_seconds_bucket[5m]))) > 0",
+          "legendFormat": "p99 {{model}}",
+          "refId": "C"
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Thời gian đi đâu: tiền xử lý, suy luận, hậu xử lý",
+      "description": "Bóc tách một request thành ba chặng của LỚP ỨNG DỤNG. Biểu đồ này trả lời câu hỏi mà số đo Triton không trả lời được: hệ thống chậm vì model hay vì code Python? Đo được trên hệ thống này: tiền xử lý (tokenize) chiếm 4,70 ms, tức 33,6% thời gian mỗi request. Một phần ba thời gian nằm ngoài tầm nhìn của Triton. Tiền xử lý cao thì tối ưu tokenizer hoặc chuyển sang fast tokenizer, không phải mua thêm GPU.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 35,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (stage) (rate(nlpops_stage_latency_seconds_sum[1m])) / clamp_min(sum by (stage) (rate(nlpops_stage_latency_seconds_count[1m])), 0.001)",
+          "legendFormat": "{{stage}}",
+          "refId": "A"
+        }
+      ],
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Chênh lệch giữa hai lớp: FastAPI đo được so với Triton đo được",
+      "description": "Đường trên là latency trung bình FastAPI đo, đường dưới là latency trung bình Triton đo. KHOẢNG CÁCH giữa hai đường chính là chi phí của lớp ứng dụng: tokenize, gom span, kiểm tra đầu vào, dựng response. Khoảng cách rộng ra mà Triton vẫn phẳng nghĩa là nút thắt nằm ở code Python chứ không ở model.",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 8
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nlpops_e2e_latency_seconds_sum[1m])) / clamp_min(sum(rate(nlpops_e2e_latency_seconds_count[1m])), 0.001)",
+          "legendFormat": "FastAPI đo (end-to-end)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nv_inference_request_duration_us[1m])) / clamp_min(sum(rate(nv_inference_request_success[1m])), 0.001) / 1000000",
+          "legendFormat": "Triton đo (trong máy chủ suy luận)",
+          "refId": "B"
+        }
+      ],
+      "id": 13
+    },
+    {
+      "type": "row",
+      "title": "Tài nguyên phần cứng (phần kỹ sư hạ tầng quan tâm)",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Mức sử dụng GPU (%)",
+      "description": "GPU thấp mà độ trễ cao nghĩa là nghẽn ở chỗ khác: tokenize trên CPU, đường mạng, hoặc chính tiến trình web. Đừng mua thêm GPU trước khi nhìn biểu đồ này.",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 18
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nv_gpu_utilization",
+          "legendFormat": "GPU {{gpu_uuid}}",
+          "refId": "A"
+        }
+      ],
+      "id": 15
+    },
+    {
+      "type": "timeseries",
+      "title": "Bộ nhớ GPU đã dùng",
+      "description": "Bộ nhớ GPU là tài nguyên cạn trước nhất khi tăng số bản sao model hoặc tăng kích thước batch. Hết bộ nhớ thì Triton không suy giảm dần mà chết hẳn.",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 18
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nv_gpu_memory_used_bytes",
+          "legendFormat": "Đã dùng",
+          "refId": "A"
+        },
+        {
+          "expr": "nv_gpu_memory_total_bytes",
+          "legendFormat": "Tổng dung lượng",
+          "refId": "B"
+        }
+      ],
+      "id": 16
+    },
+    {
+      "type": "timeseries",
+      "title": "Điện năng GPU (W)",
+      "description": "Điện năng quy đổi trực tiếp ra chi phí vận hành. Đây là trục Chi phí trong bài toán cân bằng giữa chất lượng, độ trễ và tiền.",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 38
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 18
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nv_gpu_power_usage",
+          "legendFormat": "Đang dùng",
+          "refId": "A"
+        },
+        {
+          "expr": "nv_gpu_power_limit",
+          "legendFormat": "Giới hạn",
+          "refId": "B"
+        }
+      ],
+      "id": 17
+    }
+  ]
+}

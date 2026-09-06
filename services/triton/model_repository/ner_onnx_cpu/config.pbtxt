@@ -1,0 +1,49 @@
+# Bản sao chạy trên CPU của cùng một model.
+#
+# File trọng số `1/model.onnx` ở đây là một liên kết tượng trưng (symlink) trỏ
+# về `../../ner_onnx/1/model.onnx`, nên KHÔNG tốn thêm 538 MB đĩa, và không bao
+# giờ có chuyện hai bản lệch phiên bản nhau.
+#
+# Có model này để trả lời bằng số đo, không phải bằng cảm giác, hai câu hỏi:
+#   - GPU nhanh hơn CPU bao nhiêu lần trên đúng bài toán của mình?
+#   - Máy không có GPU thì hệ thống còn dùng được không?
+# Cách đo: POST /v1/ner/compare với backends ["triton-gpu", "triton-cpu"].
+#
+# Máy KHÔNG có GPU thì đây là backend chính: đặt DEFAULT_BACKEND=triton-cpu
+# trong .env và xoá khối `deploy` của service triton trong docker-compose.yml.
+name: "ner_onnx_cpu"
+platform: "onnxruntime_onnx"
+max_batch_size: 8
+
+input [
+  {
+    name: "input_ids"
+    data_type: TYPE_INT64
+    dims: [ -1 ]
+  },
+  {
+    name: "attention_mask"
+    data_type: TYPE_INT64
+    dims: [ -1 ]
+  }
+]
+
+output [
+  {
+    name: "logits"
+    data_type: TYPE_FP32
+    dims: [ -1, 7 ]
+  }
+]
+
+dynamic_batching {
+  preferred_batch_size: [ 4, 8 ]
+  max_queue_delay_microseconds: 5000
+}
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_CPU
+  }
+]

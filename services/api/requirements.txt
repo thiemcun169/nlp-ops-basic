@@ -1,0 +1,13 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+tritonclient[http]==2.53.0
+transformers==4.47.1
+numpy==1.26.4
+openai==1.59.6
+pydantic==2.10.4
+# Dùng cho backend dự phòng chạy model ngay trong tiến trình API.
+# Bản CPU, khoảng 16 MB. Bản GPU không cần ở đây: GPU đã do Triton phụ trách.
+onnxruntime==1.20.1
+# Xuất số đo của lớp ứng dụng ở /metrics. Dùng Histogram nên dựng được
+# p50/p90/p99 thật, khác với bộ đếm cộng dồn của Triton (chỉ ra trung bình).
+prometheus-client==0.21.1

@@ -1,0 +1,51 @@
+# Model chạy trên GPU. Đây là cấu hình dùng khi phục vụ thật.
+#
+# Cùng file trọng số này còn được nạp lần thứ hai dưới tên `ner_onnx_cpu` với
+# `KIND_CPU`, để đo chênh lệch GPU/CPU một cách công bằng: cùng trọng số, cùng
+# runtime, cùng máy chủ, chỉ khác phần cứng.
+name: "ner_onnx"
+platform: "onnxruntime_onnx"
+
+# Cho phép Triton gộp nhiều request lẻ thành một batch. Đây chính là thứ mà một
+# vòng lặp `model(x)` tự viết không có, và là lý do chính để dùng máy chủ suy luận.
+max_batch_size: 8
+
+input [
+  {
+    name: "input_ids"
+    data_type: TYPE_INT64
+    dims: [ -1 ]          # -1: độ dài câu thay đổi tuỳ request
+  },
+  {
+    name: "attention_mask"
+    data_type: TYPE_INT64
+    dims: [ -1 ]
+  }
+]
+
+output [
+  {
+    name: "logits"
+    data_type: TYPE_FP32
+    dims: [ -1, 7 ]       # 7 nhãn: O, B-PER, I-PER, B-ORG, I-ORG, B-LOC, I-LOC
+  }
+]
+
+# Gộp batch động: chờ tối đa 5 ms để gom thêm request rồi mới chạy một lượt.
+# Đánh đổi kinh điển giữa độ trễ và thông lượng -- 5 ms cộng vào mỗi request
+# đổi lấy việc GPU xử lý nhiều câu trong một lần nạp trọng số.
+# Chờ lâu hơn thì thông lượng cao hơn nhưng người dùng cảm nhận chậm hơn.
+dynamic_batching {
+  preferred_batch_size: [ 4, 8 ]
+  max_queue_delay_microseconds: 5000
+}
+
+# Một bản sao model nằm trên GPU 0. Tăng `count` lên 2 sẽ giữ hai bản sao trên
+# cùng card, chạy song song được nhưng tốn gấp đôi bộ nhớ GPU.
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+    gpus: [ 0 ]
+  }
+]

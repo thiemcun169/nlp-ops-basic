@@ -1,0 +1,493 @@
+[
+  {
+    "id": "s000",
+    "group": "chuẩn",
+    "text": "Nguyễn Bá Thiêm làm việc tại Google ở Hà Nội.",
+    "entities": [
+      {
+        "text": "Nguyễn Bá Thiêm",
+        "label": "PER",
+        "start": 0,
+        "end": 15
+      },
+      {
+        "text": "Google",
+        "label": "ORG",
+        "start": 29,
+        "end": 35
+      },
+      {
+        "text": "Hà Nội",
+        "label": "LOC",
+        "start": 38,
+        "end": 44
+      }
+    ]
+  },
+  {
+    "id": "s001",
+    "group": "chuẩn",
+    "text": "Việt Nam và Hoa Kỳ ký thoả thuận hợp tác về công nghệ.",
+    "entities": [
+      {
+        "text": "Việt Nam",
+        "label": "LOC",
+        "start": 0,
+        "end": 8
+      },
+      {
+        "text": "Hoa Kỳ",
+        "label": "LOC",
+        "start": 12,
+        "end": 18
+      }
+    ]
+  },
+  {
+    "id": "s002",
+    "group": "chuẩn",
+    "text": "Phạm Nhật Vượng sáng lập VinGroup tại Hải Phòng.",
+    "entities": [
+      {
+        "text": "Phạm Nhật Vượng",
+        "label": "PER",
+        "start": 0,
+        "end": 15
+      },
+      {
+        "text": "VinGroup",
+        "label": "ORG",
+        "start": 25,
+        "end": 33
+      },
+      {
+        "text": "Hải Phòng",
+        "label": "LOC",
+        "start": 38,
+        "end": 47
+      }
+    ]
+  },
+  {
+    "id": "s003",
+    "group": "chuẩn",
+    "text": "Trường Đại học Bách khoa Hà Nội tuyển sinh thêm ngành trí tuệ nhân tạo.",
+    "entities": [
+      {
+        "text": "Trường Đại học Bách khoa Hà Nội",
+        "label": "ORG",
+        "start": 0,
+        "end": 31
+      }
+    ]
+  },
+  {
+    "id": "s004",
+    "group": "chuẩn",
+    "text": "Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập tại Quảng trường Ba Đình.",
+    "entities": [
+      {
+        "text": "Hồ Chí Minh",
+        "label": "PER",
+        "start": 9,
+        "end": 20
+      },
+      {
+        "text": "Quảng trường Ba Đình",
+        "label": "LOC",
+        "start": 48,
+        "end": 68
+      }
+    ]
+  },
+  {
+    "id": "s005",
+    "group": "dấu câu",
+    "text": "Anh Nguyễn Viết Quang, 40 tuổi, là nạn nhân duy nhất sống sót.",
+    "entities": [
+      {
+        "text": "Nguyễn Viết Quang",
+        "label": "PER",
+        "start": 4,
+        "end": 21
+      }
+    ]
+  },
+  {
+    "id": "s006",
+    "group": "dấu câu",
+    "text": "Vợ anh là chị Hồ Thị Mai, 36 tuổi, quê ở Bến Tre.",
+    "entities": [
+      {
+        "text": "Hồ Thị Mai",
+        "label": "PER",
+        "start": 14,
+        "end": 24
+      },
+      {
+        "text": "Bến Tre",
+        "label": "LOC",
+        "start": 41,
+        "end": 48
+      }
+    ]
+  },
+  {
+    "id": "s007",
+    "group": "dấu câu",
+    "text": "Theo lời khai, Nguyễn Đức Anh (21 tuổi) đã đến nhà nạn nhân vào rạng sáng 3/9.",
+    "entities": [
+      {
+        "text": "Nguyễn Đức Anh",
+        "label": "PER",
+        "start": 15,
+        "end": 29
+      }
+    ]
+  },
+  {
+    "id": "s008",
+    "group": "dấu câu",
+    "text": "Ông Trần Văn Hùng - giám đốc Sở Y tế Đồng Nai - xác nhận thông tin trên.",
+    "entities": [
+      {
+        "text": "Trần Văn Hùng",
+        "label": "PER",
+        "start": 4,
+        "end": 17
+      },
+      {
+        "text": "Sở Y tế Đồng Nai",
+        "label": "ORG",
+        "start": 29,
+        "end": 45
+      }
+    ]
+  },
+  {
+    "id": "s009",
+    "group": "dấu câu",
+    "text": "\"Chúng tôi sẽ điều tra\", đại diện Công an tỉnh Bình Dương nói.",
+    "entities": [
+      {
+        "text": "Công an tỉnh Bình Dương",
+        "label": "ORG",
+        "start": 34,
+        "end": 57
+      }
+    ]
+  },
+  {
+    "id": "s010",
+    "group": "đoạn dài",
+    "text": "Nạn nhân cuối trong vụ thảm sát ở Đồng Nai đã qua cơn nguy kịch. Sau ca phẫu thuật, anh Nguyễn Viết Quang, 40 tuổi, đã tỉnh lại. Ngày 4/9, sức khỏe anh Quang ổn định hơn nhưng vẫn còn mệt.",
+    "entities": [
+      {
+        "text": "Đồng Nai",
+        "label": "LOC",
+        "start": 34,
+        "end": 42
+      },
+      {
+        "text": "Nguyễn Viết Quang",
+        "label": "PER",
+        "start": 88,
+        "end": 105
+      },
+      {
+        "text": "Quang",
+        "label": "PER",
+        "start": 152,
+        "end": 157
+      }
+    ]
+  },
+  {
+    "id": "s011",
+    "group": "đoạn dài",
+    "text": "Công ty Cổ phần FPT công bố kết quả kinh doanh quý III. Đại diện FPT cho biết doanh thu từ thị trường Nhật Bản tăng mạnh, trong khi mảng viễn thông tại Thành phố Hồ Chí Minh giữ nguyên.",
+    "entities": [
+      {
+        "text": "Công ty Cổ phần FPT",
+        "label": "ORG",
+        "start": 0,
+        "end": 19
+      },
+      {
+        "text": "FPT",
+        "label": "ORG",
+        "start": 65,
+        "end": 68
+      },
+      {
+        "text": "Nhật Bản",
+        "label": "LOC",
+        "start": 102,
+        "end": 110
+      },
+      {
+        "text": "Thành phố Hồ Chí Minh",
+        "label": "LOC",
+        "start": 152,
+        "end": 173
+      }
+    ]
+  },
+  {
+    "id": "s012",
+    "group": "viết thường",
+    "text": "nguyễn văn a sống ở đà nẵng và làm cho fpt software.",
+    "entities": [
+      {
+        "text": "nguyễn văn a",
+        "label": "PER",
+        "start": 0,
+        "end": 12
+      },
+      {
+        "text": "đà nẵng",
+        "label": "LOC",
+        "start": 20,
+        "end": 27
+      },
+      {
+        "text": "fpt software",
+        "label": "ORG",
+        "start": 39,
+        "end": 51
+      }
+    ]
+  },
+  {
+    "id": "s013",
+    "group": "viết thường",
+    "text": "hôm qua mình đi hà nội chơi với thằng tuấn.",
+    "entities": [
+      {
+        "text": "hà nội",
+        "label": "LOC",
+        "start": 16,
+        "end": 22
+      },
+      {
+        "text": "tuấn",
+        "label": "PER",
+        "start": 38,
+        "end": 42
+      }
+    ]
+  },
+  {
+    "id": "s014",
+    "group": "nước ngoài",
+    "text": "CEO Tim Cook của Apple đến thăm Thành phố Hồ Chí Minh.",
+    "entities": [
+      {
+        "text": "Tim Cook",
+        "label": "PER",
+        "start": 4,
+        "end": 12
+      },
+      {
+        "text": "Apple",
+        "label": "ORG",
+        "start": 17,
+        "end": 22
+      },
+      {
+        "text": "Thành phố Hồ Chí Minh",
+        "label": "LOC",
+        "start": 32,
+        "end": 53
+      }
+    ]
+  },
+  {
+    "id": "s015",
+    "group": "nước ngoài",
+    "text": "Elon Musk thông báo Tesla sẽ mở nhà máy mới tại Berlin.",
+    "entities": [
+      {
+        "text": "Elon Musk",
+        "label": "PER",
+        "start": 0,
+        "end": 9
+      },
+      {
+        "text": "Tesla",
+        "label": "ORG",
+        "start": 20,
+        "end": 25
+      },
+      {
+        "text": "Berlin",
+        "label": "LOC",
+        "start": 48,
+        "end": 54
+      }
+    ]
+  },
+  {
+    "id": "s016",
+    "group": "nước ngoài",
+    "text": "Nhóm nghiên cứu của Google DeepMind công bố kết quả trên tạp chí Nature.",
+    "entities": [
+      {
+        "text": "Google DeepMind",
+        "label": "ORG",
+        "start": 20,
+        "end": 35
+      },
+      {
+        "text": "Nature",
+        "label": "ORG",
+        "start": 65,
+        "end": 71
+      }
+    ]
+  },
+  {
+    "id": "s017",
+    "group": "tổ chức",
+    "text": "Ngân hàng Nhà nước Việt Nam giữ nguyên lãi suất điều hành.",
+    "entities": [
+      {
+        "text": "Ngân hàng Nhà nước Việt Nam",
+        "label": "ORG",
+        "start": 0,
+        "end": 27
+      }
+    ]
+  },
+  {
+    "id": "s018",
+    "group": "tổ chức",
+    "text": "Bộ Giáo dục và Đào tạo công bố phương án thi tốt nghiệp.",
+    "entities": [
+      {
+        "text": "Bộ Giáo dục và Đào tạo",
+        "label": "ORG",
+        "start": 0,
+        "end": 22
+      }
+    ]
+  },
+  {
+    "id": "s019",
+    "group": "tổ chức",
+    "text": "Câu lạc bộ Hoàng Anh Gia Lai thắng Hà Nội FC trên sân Pleiku.",
+    "entities": [
+      {
+        "text": "Câu lạc bộ Hoàng Anh Gia Lai",
+        "label": "ORG",
+        "start": 0,
+        "end": 28
+      },
+      {
+        "text": "Hà Nội FC",
+        "label": "ORG",
+        "start": 35,
+        "end": 44
+      },
+      {
+        "text": "Pleiku",
+        "label": "LOC",
+        "start": 54,
+        "end": 60
+      }
+    ]
+  },
+  {
+    "id": "s020",
+    "group": "bẫy",
+    "text": "Anh ấy làm ở một công ty công nghệ tại quận trung tâm.",
+    "entities": []
+  },
+  {
+    "id": "s021",
+    "group": "bẫy",
+    "text": "Giá vàng trong nước tăng 500.000 đồng mỗi lượng trong sáng nay.",
+    "entities": []
+  },
+  {
+    "id": "s022",
+    "group": "bẫy",
+    "text": "Sông Hồng chảy qua nhiều tỉnh phía Bắc trước khi đổ ra Biển Đông.",
+    "entities": [
+      {
+        "text": "Sông Hồng",
+        "label": "LOC",
+        "start": 0,
+        "end": 9
+      },
+      {
+        "text": "Biển Đông",
+        "label": "LOC",
+        "start": 55,
+        "end": 64
+      }
+    ]
+  },
+  {
+    "id": "s023",
+    "group": "bẫy",
+    "text": "Cô ấy học tiếng Anh ở trung tâm gần nhà.",
+    "entities": []
+  },
+  {
+    "id": "s024",
+    "group": "liền kề",
+    "text": "Hà Nội, Hải Phòng, Đà Nẵng và Cần Thơ là bốn thành phố trực thuộc trung ương.",
+    "entities": [
+      {
+        "text": "Hà Nội",
+        "label": "LOC",
+        "start": 0,
+        "end": 6
+      },
+      {
+        "text": "Hải Phòng",
+        "label": "LOC",
+        "start": 8,
+        "end": 17
+      },
+      {
+        "text": "Đà Nẵng",
+        "label": "LOC",
+        "start": 19,
+        "end": 26
+      },
+      {
+        "text": "Cần Thơ",
+        "label": "LOC",
+        "start": 30,
+        "end": 37
+      }
+    ]
+  },
+  {
+    "id": "s025",
+    "group": "liền kề",
+    "text": "Nguyễn An và Trần Bình cùng làm việc tại Viettel.",
+    "entities": [
+      {
+        "text": "Nguyễn An",
+        "label": "PER",
+        "start": 0,
+        "end": 9
+      },
+      {
+        "text": "Trần Bình",
+        "label": "PER",
+        "start": 13,
+        "end": 22
+      },
+      {
+        "text": "Viettel",
+        "label": "ORG",
+        "start": 41,
+        "end": 48
+      }
+    ]
+  }
+]

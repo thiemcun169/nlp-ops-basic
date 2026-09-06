@@ -1,0 +1,33 @@
+{
+  "name": "phobert-ner",
+  "version": 1,
+  "created": "2026-09-05",
+  "base_model": "vinai/phobert-base",
+  "task": "token-classification (NER: PER, ORG, LOC)",
+  "dataset": "wikiann/vi",
+  "train_size": 20000,
+  "test_size": 10000,
+  "max_len": 128,
+  "epochs": 3,
+  "learning_rate": 3e-05,
+  "seed": 0,
+  "test_metrics": {
+    "eval_loss": 0.1882,
+    "eval_precision": 0.8926,
+    "eval_recall": 0.9018,
+    "eval_f1": 0.8972,
+    "eval_runtime": 2.1043,
+    "eval_samples_per_second": 4752.086,
+    "eval_steps_per_second": 74.608
+  },
+  "labels": [
+    "O",
+    "B-PER",
+    "I-PER",
+    "B-ORG",
+    "I-ORG",
+    "B-LOC",
+    "I-LOC"
+  ],
+  "tokenization": "tách dấu câu thành token riêng, xem services/api/app/core/tokenization.py"
+}

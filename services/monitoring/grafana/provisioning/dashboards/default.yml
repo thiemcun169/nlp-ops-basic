@@ -1,0 +1,16 @@
+# Nạp dashboard từ FILE thay vì bấm tay trong giao diện Grafana.
+#
+# Lý do: dashboard vẽ tay sống trong cơ sở dữ liệu của Grafana, không ai xem lại
+# được lịch sử thay đổi, và dựng lại môi trường mới là mất sạch. Để dashboard ở
+# dạng file trong repo thì nó được review như mọi đoạn mã khác, và máy nào dựng
+# lên cũng có cùng một màn hình giám sát.
+apiVersion: 1
+providers:
+  - name: nlp-ops-basic
+    orgId: 1
+    folder: "NLP Ops"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

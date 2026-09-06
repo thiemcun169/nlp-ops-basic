@@ -1,0 +1,106 @@
+# Toàn bộ hệ thống, dựng bằng một lệnh: docker compose up -d
+#
+# Bốn dịch vụ, mỗi cái một vai trò tách bạch:
+#   triton      chạy model (lớp suy luận)
+#   api         nhận HTTP, tiền/hậu xử lý, gọi Triton (lớp ứng dụng)
+#   prometheus  thu thập số đo từ Triton
+#   grafana     hiển thị số đo
+#
+# Mọi cổng đều đọc từ biến môi trường và có giá trị mặc định. Cổng bị chiếm thì
+# đặt lại trong .env, không phải sửa file này.
+
+services:
+  # ---- Lớp suy luận -------------------------------------------------------
+  triton:
+    image: ${TRITON_IMAGE:-tritonserver-ner-slim}
+    container_name: nlpops-triton
+    # --model-control-mode=explicit + --load-model: chỉ nạp model được liệt kê.
+    # Nhờ vậy máy không có GPU vẫn dựng được stack bằng cách bỏ ner_onnx đi.
+    command: ["tritonserver", "--model-repository=/models", "--strict-model-config=false"]
+    volumes:
+      - ./services/triton/model_repository:/models:ro
+    ports:
+      - "${TRITON_HTTP_PORT:-8000}:8000"    # suy luận qua HTTP
+      - "${TRITON_GRPC_PORT:-8001}:8001"    # suy luận qua gRPC
+      - "${TRITON_METRICS_PORT:-8002}:8002" # số đo cho Prometheus
+    # Cấp GPU cho container. Máy KHÔNG có GPU thì xoá nguyên khối `deploy` này
+    # và đổi DEFAULT_MODEL=phobert-ner-cpu trong .env. Xem docs/SETUP_LINUX.md.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  # ---- Lớp ứng dụng -------------------------------------------------------
+  api:
+    build: ./services/api
+    image: nlpops-api
+    container_name: nlpops-api
+    environment:
+      - TRITON_URL=triton:8000
+      - TRITON_CONCURRENCY=${TRITON_CONCURRENCY:-4}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-phobert-ner-gpu}
+      - FALLBACK_MODEL=${FALLBACK_MODEL:-phobert-ner-local}
+      - ONNX_LOCAL_PATH=/models/ner_onnx/1/model.onnx
+      - ONNX_LOCAL_THREADS=${ONNX_LOCAL_THREADS:-2}
+      # LLM: để trống LLM_MODEL thì hệ thống tự dò model khả dụng.
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      - LLM_MODEL=${LLM_MODEL:-}
+    volumes:
+      # Chỉ đọc: model dùng chung với Triton, phục vụ backend dự phòng chạy
+      # ONNX Runtime ngay trong tiến trình API.
+      - ./services/triton/model_repository:/models:ro
+    depends_on:
+      triton:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  # ---- Giám sát vận hành --------------------------------------------------
+  # Cổng mặc định cố tình lệch khỏi 9090/3000: nhiều máy đã có sẵn một stack
+  # Prometheus/Grafana khác và ta không được đụng vào nó.
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nlpops-prometheus
+    volumes:
+      - ./services/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=${PROM_RETENTION:-6h}"
+    ports:
+      - "${PROMETHEUS_PORT:-9490}:9090"
+    depends_on:
+      triton:
+        condition: service_healthy
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nlpops-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      # Cho xem dashboard không cần đăng nhập. Tiện khi học và khi demo;
+      # KHÔNG dùng cấu hình này cho hệ thống mở ra Internet.
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./services/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./services/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped

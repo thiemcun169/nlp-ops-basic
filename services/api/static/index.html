@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NER tiếng Việt: trang thử nghiệm</title>
+<style>
+  /* HTML + CSS + JavaScript thuần, không thư viện ngoài. Trang được phục vụ từ
+     chính FastAPI nên fetch('/v1/ner') cùng nguồn, không phải cấu hình CORS. */
+  :root {
+    --blue: #4472C4; --blue-dark: #2F4F8F; --orange: #ED7D31;
+    --bg: #F5F7FA; --card: #FFFFFF; --border: #E2E6ED;
+    --text: #1A1A1A; --muted: #6B7280;
+    --per: #4472C4; --org: #ED7D31; --loc: #2E8B57;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background: var(--bg); color: var(--text); margin: 0; padding: 24px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--border);
+          border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  textarea { width: 100%; min-height: 90px; padding: 10px 12px;
+             border: 1px solid var(--border); border-radius: 8px;
+             font-size: 15px; font-family: inherit; resize: vertical; line-height: 1.5; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin: 14px 0; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+           font-size: 14px; font-family: inherit; background: #fff; min-width: 190px; }
+  .examples { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+  .examples button { background: var(--bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 4px 10px; margin: 3px 4px 0 0; cursor: pointer;
+      font-size: 12px; color: var(--blue-dark); }
+  button.run { background: var(--orange); color: white; border: none;
+      padding: 10px 22px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  button.run:disabled { background: #ccc; cursor: not-allowed; }
+  .checkline { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .highlighted { line-height: 2.3; font-size: 15px; white-space: pre-wrap; }
+  .ent { padding: 2px 5px; border-radius: 5px; font-weight: 600; color: white; }
+  .ent .tag { font-size: 9px; vertical-align: super; opacity: .9; margin-left: 3px; font-weight: 400; }
+  .ent.PER { background: var(--per); } .ent.ORG { background: var(--org); } .ent.LOC { background: var(--loc); }
+  .badge { display: inline-block; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 3px 10px; font-size: 12px; color: var(--muted);
+      margin: 10px 6px 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 14px; margin-top: 12px; }
+  .col { border: 1px solid var(--border); border-radius: 8px; padding: 14px; background: #fff; }
+  .col h3 { margin: 0 0 4px; font-size: 14px; color: var(--text); }
+  .col .kind { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+  .error { color: #C0392B; background: #FDECEA; border: 1px solid #F5C6C0;
+           border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 13px; }
+  .warn { color: #8A6100; background: #FFF6E0; border: 1px solid #F0DCA8;
+          border-radius: 8px; padding: 8px 10px; margin-top: 10px; font-size: 12.5px; }
+  .legend { font-size: 12px; color: var(--muted); margin-top: 12px; }
+  .legend span { margin-right: 14px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+  table.agree { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+  table.agree th, table.agree td { border: 1px solid var(--border); padding: 6px 9px; text-align: left; }
+  table.agree th { background: var(--bg); font-weight: 600; color: var(--muted); }
+  .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 24px; }
+  code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Nhận diện thực thể có tên cho tiếng Việt</h1>
+  <div class="subtitle">
+    Cùng một API, đổi model lõi bằng một trường trong body. Tài liệu tự sinh tại <a href="/docs">/docs</a>.
+  </div>
+
+  <div class="card">
+    <textarea id="inputText">Nạn nhân cuối trong vụ thảm sát ở Đồng Nai đã qua nguy kịch. Anh Nguyễn Viết Quang, 40 tuổi, nạn nhân duy nhất sống sót, đã qua cơn nguy kịch. Vợ anh là chị Hồ Thị Mai, 36 tuổi.</textarea>
+    <div class="examples">
+      Ví dụ nhanh:
+      <button onclick="setExample('Nguyễn Bá Thiêm làm việc tại Google ở Hà Nội.')">Câu ngắn</button>
+      <button onclick="setExample('Phạm Nhật Vượng sáng lập VinGroup tại Hải Phòng, sau đó chuyển trụ sở về Hà Nội.')">Có tổ chức</button>
+      <button onclick="setExample('nguyễn văn a sống ở đà nẵng và làm cho fpt software')">Viết thường (bẫy)</button>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="mode">Chế độ</label>
+        <select id="mode" onchange="onModeChange()">
+          <option value="single">Chạy một model</option>
+          <option value="compare">So sánh nhiều model</option>
+        </select>
+      </div>
+      <div class="field" id="singleField">
+        <label for="model">Model</label>
+        <select id="model"></select>
+      </div>
+      <div class="field" id="compareField" style="display:none">
+        <label for="modelsMulti">Các model cần so (giữ Ctrl để chọn nhiều)</label>
+        <select id="modelsMulti" multiple size="4" style="min-height:96px"></select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="run" id="runBtn" onclick="run()">Chạy</button>
+      </div>
+    </div>
+
+    <div class="checkline">
+      <input type="checkbox" id="withScores" />
+      <label for="withScores" style="font-weight:400">Kèm độ tin cậy (chỉ có ở model tự host)</label>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <footer>
+    <code>POST /v1/ner</code> &nbsp; <code>POST /v1/ner/compare</code> &nbsp; <code>GET /v1/models</code>
+  </footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Tô màu bằng OFFSET ký tự, không phải bằng so khớp chuỗi.
+//
+// Cách cũ dò từng từ rồi tra bảng `từ -> nhãn`. Nó hỏng ngay khi từ dính dấu
+// câu: API trả thực thể "Quang" trong khi văn bản có "Quang," nên không khớp và
+// không tô được gì. Dùng offset thì mọi model đều tô đúng, kể cả LLM trả về
+// cả cụm nhiều từ.
+// ---------------------------------------------------------------------------
+function escapeHTML(s) {
+  return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function renderHighlighted(text, entities) {
+  const spans = entities
+    .filter(e => e.start >= 0 && e.end > e.start)
+    .sort((a, b) => a.start - b.start);
+
+  let html = "", cursor = 0;
+  for (const e of spans) {
+    if (e.start < cursor) continue;               // bỏ span chồng lấn
+    html += escapeHTML(text.slice(cursor, e.start));
+    const score = e.score != null ? ` ${(e.score * 100).toFixed(0)}%` : "";
+    html += `<span class="ent ${e.label}" title="${e.start}-${e.end}${score}">`
+          + `${escapeHTML(text.slice(e.start, e.end))}`
+          + `<span class="tag">${e.label}${score}</span></span>`;
+    cursor = e.end;
+  }
+  html += escapeHTML(text.slice(cursor));
+  return html;
+}
+
+function legendHTML() {
+  return `<div class="legend">
+    <span><span class="dot" style="background:var(--per)"></span>PER (người)</span>
+    <span><span class="dot" style="background:var(--org)"></span>ORG (tổ chức)</span>
+    <span><span class="dot" style="background:var(--loc)"></span>LOC (địa điểm)</span>
+  </div>`;
+}
+
+function unmatchedWarning(entities) {
+  const bad = entities.filter(e => e.matched === false);
+  if (!bad.length) return "";
+  return `<div class="warn"><b>${bad.length} cụm không có trong văn bản gốc:</b> `
+       + bad.map(e => `"${escapeHTML(e.text)}" [${e.label}]`).join(", ")
+       + `. LLM đã viết lại chữ thay vì trích nguyên văn, nên không định vị được.</div>`;
+}
+
+function metaBadges(r) {
+  let out = "";
+  if (r.latency_ms != null) out += `<span class="badge">Độ trễ: ${r.latency_ms} ms</span>`;
+  out += `<span class="badge">${r.entities.length} thực thể</span>`;
+  const m = r.meta || {};
+  if (r.runtime) out += `<span class="badge">chạy ở: ${r.runtime}</span>`;
+  if (m.structured_mode) out += `<span class="badge">structured: ${m.structured_mode}</span>`;
+  if (m.truncated) out += `<span class="badge" style="color:#8A6100">văn bản bị cắt do vượt max_len</span>`;
+  if (m.fallback_from) out += `<span class="badge" style="color:#C0392B">đã chuyển dự phòng từ ${m.fallback_from}</span>`;
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Danh sách model được lấy TỪ MÁY CHỦ, không viết cứng trong trang.
+// Thêm model mới ở phía server là giao diện tự có, không phải sửa file này.
+// ---------------------------------------------------------------------------
+let MODELS = [];
+
+async function loadModels() {
+  try {
+    const data = await (await fetch("/v1/models")).json();
+    MODELS = data.models;
+    const single = document.getElementById("model");
+    const multi = document.getElementById("modelsMulti");
+    single.innerHTML = ""; multi.innerHTML = "";
+    let firstLlm = true;
+    for (const m of MODELS) {
+      const label = `${m.name}${m.ready ? "" : "  (chưa sẵn sàng)"}`;
+      const o1 = new Option(label, m.name); o1.disabled = !m.ready;
+      if (m.name === data.default) o1.selected = true;
+      single.add(o1);
+      const o2 = new Option(label, m.name); o2.disabled = !m.ready;
+      // Chọn sẵn model mặc định và MỘT model LLM, để so ngay được hai bên.
+      o2.selected = m.ready && (m.name === data.default
+                                || (m.runtime === "llm" && firstLlm));
+      if (m.runtime === "llm" && firstLlm && m.ready) firstLlm = false;
+      multi.add(o2);
+    }
+  } catch (e) {
+    document.getElementById("result").innerHTML =
+      `<div class="error">Không đọc được danh sách model: ${e.message}</div>`;
+  }
+}
+
+function onModeChange() {
+  const compare = document.getElementById("mode").value === "compare";
+  document.getElementById("singleField").style.display = compare ? "none" : "flex";
+  document.getElementById("compareField").style.display = compare ? "flex" : "none";
+  document.getElementById("result").innerHTML = "";
+}
+
+function setExample(t) { document.getElementById("inputText").value = t; }
+
+function describe(name) {
+  const m = MODELS.find(x => x.name === name);
+  return m ? `${m.runtime} -- ${m.description}` : "";
+}
+
+async function run() {
+  const text = document.getElementById("inputText").value.trim();
+  const out = document.getElementById("result");
+  const btn = document.getElementById("runBtn");
+  if (!text) return;
+
+  btn.disabled = true; btn.textContent = "Đang chạy..."; out.innerHTML = "";
+  const options = { return_scores: document.getElementById("withScores").checked };
+
+  try {
+    if (document.getElementById("mode").value === "single") {
+      const model = document.getElementById("model").value;
+      const r = await fetch("/v1/ner", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, model, options }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || JSON.stringify(data));
+      out.innerHTML = `
+        <div class="col" style="margin-top:14px">
+          <h3>${data.model}</h3>
+          <div class="kind">${describe(data.model)}</div>
+          <div class="highlighted">${renderHighlighted(data.text, data.entities)}</div>
+          ${unmatchedWarning(data.entities)}
+          <div>${metaBadges(data)}</div>
+        </div>${legendHTML()}`;
+
+    } else {
+      const models = [...document.getElementById("modelsMulti").selectedOptions].map(o => o.value);
+      if (models.length < 1) throw new Error("Chọn ít nhất một model.");
+      const r = await fetch("/v1/ner/compare", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, models, options }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || JSON.stringify(data));
+
+      const cols = data.results.map(res => `
+        <div class="col">
+          <h3>${res.model}</h3>
+          <div class="kind">${describe(res.model)}</div>
+          ${res.error
+            ? `<div class="error">${escapeHTML(res.error)}</div>`
+            : `<div class="highlighted">${renderHighlighted(data.text, res.entities)}</div>
+               ${unmatchedWarning(res.entities)}
+               <div>${metaBadges(res)}</div>`}
+        </div>`).join("");
+
+      let agreeTable = "";
+      if (data.agreements.length) {
+        agreeTable = `<table class="agree">
+          <tr><th>So với mốc</th><th>Model</th><th>Precision</th><th>Recall</th><th>F1</th>
+              <th>Chỉ mốc có</th><th>Chỉ model này có</th></tr>` +
+          data.agreements.map(a => `<tr>
+            <td>${a.reference}</td><td><b>${a.candidate}</b></td>
+            <td>${a.precision}</td><td>${a.recall}</td><td><b>${a.f1}</b></td>
+            <td>${a.only_in_reference.map(escapeHTML).join("<br>") || "&mdash;"}</td>
+            <td>${a.only_in_candidate.map(escapeHTML).join("<br>") || "&mdash;"}</td>
+          </tr>`).join("") + `</table>
+          <div class="note">Đây là mức KHỚP NHAU giữa hai model, không phải độ chính xác:
+          không có đáp án đúng ở đây, hai model cùng sai giống nhau vẫn cho F1 bằng 1.
+          Muốn con số chính xác thật thì chạy <code>benchmarks/run_benchmark.py</code>
+          trên tập dữ liệu có nhãn người gán.</div>`;
+      }
+      out.innerHTML = `<div class="grid">${cols}</div>${legendHTML()}${agreeTable}`;
+    }
+  } catch (err) {
+    out.innerHTML = `<div class="error">${escapeHTML(err.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = "Chạy";
+  }
+}
+
+loadModels();
+</script>
+</body>
+</html>

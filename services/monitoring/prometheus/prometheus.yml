@@ -1,0 +1,31 @@
+# Prometheus thu thập số đo của hệ thống NER.
+#
+# Triton tự xuất metrics theo chuẩn Prometheus ở cổng 8002, nên không cần cài
+# exporter riêng. Đây là một lợi thế thật của máy chủ suy luận: đo đạc có sẵn,
+# không phải tự nhét bộ đếm vào mã nguồn.
+#
+# Địa chỉ phải là TÊN SERVICE trong docker compose (`triton:8002`), không phải
+# `localhost:8002`. Mỗi container có `localhost` riêng của nó -- đây là lỗi hay
+# gặp nhất khi mới ghép Prometheus vào compose (xem TROUBLESHOOTING E09).
+global:
+  scrape_interval: 5s        # 5 giây/lần: đủ mịn để nhìn thấy một đợt đo tải 30 giây
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Lớp suy luận: Triton tự xuất, không cần exporter.
+  - job_name: triton
+    static_configs:
+      - targets: ["triton:8002"]
+        labels:
+          service: triton
+          project: nlp-ops-basic
+
+  # Lớp ứng dụng: FastAPI tự xuất ở /metrics. Thu riêng để so được hai lớp với
+  # nhau; hiệu số giữa chúng chính là chi phí của tokenize và hậu xử lý.
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8080"]
+        labels:
+          service: api
+          project: nlp-ops-basic

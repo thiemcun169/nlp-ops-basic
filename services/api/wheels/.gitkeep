@@ -1,0 +1,2 @@
+# Giữ thư mục này trong Git. Dockerfile COPY nó vào image; thiếu nó là build hỏng.
+# Nội dung (*.whl) bị bỏ qua, sinh lại bằng: bash scripts/download_wheels.sh

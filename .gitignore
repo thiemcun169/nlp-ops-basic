@@ -1,0 +1,48 @@
+# ---- Bí mật: TUYỆT ĐỐI không commit ----------------------------------------
+.env
+.env.local
+*.key
+*.pem
+
+# ---- Trọng số model --------------------------------------------------------
+# Nặng hàng trăm MB và sinh lại được bằng notebook, nên không đưa vào Git.
+# Cần lưu trữ có phiên bản thì dùng Git LFS, S3, hoặc một model registry
+# (MLflow, W&B) -- đó mới là chỗ dành cho artifact.
+*.onnx
+*.pt
+*.pth
+*.bin
+*.safetensors
+ner_ckpt/
+notebooks/ner_ckpt/
+notebooks/runs/
+
+# ---- Wheel tải sẵn (sinh lại bằng scripts/download_wheels.sh) --------------
+# Bỏ qua NỘI DUNG nhưng GIỮ LẠI thư mục. Dockerfile có dòng `COPY wheels ./wheels`,
+# nên nếu thư mục biến mất khỏi Git thì mọi lần clone mới đều build hỏng ngay:
+#     ERROR: failed to compute cache key: "/wheels": not found
+# Thư mục rỗng thì Dockerfile tự quay về cài từ mạng, đúng như đã thiết kế.
+services/api/wheels/*
+!services/api/wheels/.gitkeep
+
+# ---- Kết quả chạy đo -------------------------------------------------------
+load_test/results_*
+load_test/*.html
+benchmarks/results_*
+
+# ---- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# ---- Dữ liệu tải về / cache ------------------------------------------------
+data/
+.cache/
+
+# ---- Hệ điều hành / IDE ----------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
